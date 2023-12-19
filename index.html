@@ -81,7 +81,7 @@ button {
 async function loadTodos() {
   try {
     console.log("Before fetch");
-    let response = await fetch('http://localhost:3000/todos');
+    let response = await fetch('https://ishatie.github.io/');
     console.log("After fetch");
     let todos = await response.json();
     console.log(todos);
@@ -159,7 +159,7 @@ function showTodos(todos) {
 async function addTodo() {
   let newTodo = document.getElementById('newTodo')
   const data = { 'text': newTodo.value }
-  const response = await fetch('http://localhost:3000/todos', {
+  const response = await fetch('https://ishatie.github.io/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -177,7 +177,7 @@ async function addTodo() {
 }
 async function removeTodo(id) {
   try {
-    const response = await fetch(`http://localhost:3000/todos/${id}`, {
+    const response = await fetch(`https://ishatie.github.io/${id}`, {
       method: 'DELETE'
     });
 
@@ -201,7 +201,7 @@ async function removeTodo(id) {
 
 async function editTodo(id) {
   // Fetch the current todo by id
-  const response = await fetch(`http://localhost:3000/todos/${id}`);
+  const response = await fetch(`https://ishatie.github.io/${id}`);
   const todo = await response.json();
   
 
@@ -225,7 +225,7 @@ async function saveEdit(id) {
   const updatedText = document.getElementById(`editInput_${id}`).value;
 
   // Update the todo in the database
-  const response = await fetch(`http://localhost:3000/todos/${id}`, {
+  const response = await fetch(`https://ishatie.github.io/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
