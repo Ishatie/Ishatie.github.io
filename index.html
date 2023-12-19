@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>FullStack-esimerkkisovellus</title>
+  
+  <style>
+    body {
+  background-color: black;
+  color: white;
+}
+
+#container {
+  width: 420px;
+  background-color:black;
+  border-radius: 3px;
+  padding: 0px 15px 0px 15px;
+  margin: 10px auto;
+  border: 1px solid black;
+}
+
+h1 {
+  text-align: center;
+}
+
+h2 {
+  background-color:yellow;
+  text-align: center;
+  color: black;
+  padding: 5px;
+}
+
+ul {
+  list-style-type: square;
+  margin: 20px 0 20px 0;
+  color: white;
+}
+
+input[type=text] {
+  border: 1px solid black;
+  padding: 5px;
+  width: 300px;
+  font-size: 15px;
+}
+
+button {
+  border: 1px solid yellow;
+  margin-left: 15px;
+  padding: 5px 15px;
+  font-size: 15px;
+  cursor: pointer;
+  /* Remove the duplicated 'border' property and add a semicolon at the end */
+  width: 80px;
+}
+
+
+.delete {
+  cursor: pointer;
+  color: red;
+  font-weight: bold;
+}
+  </style>
+</head>
+<body onload="init()">
+  <div id="container">
+    <h1>Harjoitus 1</h1>
+    <h2>Tehtävälista</h2>
+    <input type="text" id="newTodo"/>
+    <button onclick="addTodo()">Lisää</button>
+    <ul id="todosList"></ul>
+    <p id="infoText"></p>
+    <script>
+        function init() {
+  let infoText = document.getElementById('infoText')
+  infoText.innerHTML = 'Ladataan tehtävälista palvelimelta, odota...'
+   loadTodos()
+   
+  
+}
+
+async function loadTodos() {
+  try {
+    console.log("Before fetch");
+    let response = await fetch('http://localhost:3000/todos');
+    console.log("After fetch");
+    let todos = await response.json();
+    console.log(todos);
+    showTodos(todos);
+  } catch (error) {
+    console.error("Error loading todos:", error);
+  }
+}
+
+
+
+//async function loadTodos() {
+ // let response = await fetch('http://localhost:3000/todos')
+ // let todos = await response.json()
+  //  console.log(todos)
+  //showTodos(todos)
+//}
+
+function createTodoListItem(todo) {
+  // luodaan uusi LI-elementti
+  let li = document.createElement('li');
+  // luodaan uusi id-attribuutti
+  let li_attr = document.createAttribute('id');
+  // kiinnitetään tehtävän/todon id:n arvo luotuun attribuuttiin 
+  li_attr.value = todo._id;
+  // kiinnitetään attribuutti LI-elementtiin
+  li.setAttributeNode(li_attr);
+  // luodaan uusi tekstisolmu, joka sisältää tehtävän/todon tekstin
+  let text = document.createTextNode(todo.text);
+  // lisätään teksti LI-elementtiin
+  li.appendChild(text);
+
+  // luodaan uusi SPAN-elementti "Delete" -toiminnallisuutta varten
+  let deleteSpan = document.createElement('span');
+  let deleteSpanAttr = document.createAttribute('class');
+  deleteSpanAttr.value = 'delete';
+  deleteSpan.setAttributeNode(deleteSpanAttr);
+  let deleteText = document.createTextNode(' x ');
+  deleteSpan.appendChild(deleteText);
+  deleteSpan.onclick = function () { removeTodo(todo._id); }
+  li.appendChild(deleteSpan);
+
+  // luodaan uusi SPAN-elementti "Edit" -toiminnallisuutta varten
+  let editSpan = document.createElement('span');
+  let editSpanAttr = document.createAttribute('class');
+  editSpanAttr.value = 'edit';
+  editSpan.setAttributeNode(editSpanAttr);
+  let editText = document.createTextNode(' Edit ');
+  editSpan.appendChild(editText);
+  editSpan.onclick = function () { editTodo(todo._id); }
+  li.appendChild(editSpan);
+
+  // palautetaan luotu LI-elementti
+  // on siis muotoa: <li id="mongoIDXXXXX">Muista soittaa...<span class="delete">x</span><span class="edit">Edit</span></li>
+  return li;
+}
+
+
+
+function showTodos(todos) {
+  let todosList = document.getElementById('todosList')
+  let infoText = document.getElementById('infoText')
+  // no todos
+  if (todos.length === 0) {
+    infoText.innerHTML = 'Ei tehtäviä'
+  } else {    
+    todos.forEach(todo => {
+        let li = createTodoListItem(todo)        
+        todosList.appendChild(li)
+    })
+    infoText.innerHTML = ''
+  }
+}
+
+async function addTodo() {
+  let newTodo = document.getElementById('newTodo')
+  const data = { 'text': newTodo.value }
+  const response = await fetch('http://localhost:3000/todos', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  let todo = await response.json()
+  let todosList = document.getElementById('todosList')
+  let li = createTodoListItem(todo)
+  todosList.appendChild(li)
+
+  let infoText = document.getElementById('infoText')
+  infoText.innerHTML = ''
+  newTodo.value = ''
+}
+async function removeTodo(id) {
+  try {
+    const response = await fetch(`http://localhost:3000/todos/${id}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete todo');
+    }
+
+    let responseJson = await response.json();
+    let li = document.getElementById(id);
+    li.parentNode.removeChild(li);
+
+    let todosList = document.getElementById('todosList');
+    if (!todosList.hasChildNodes()) {
+      let infoText = document.getElementById('infoText');
+      infoText.innerHTML = 'Ei tehtäviä';
+    }
+  } catch (error) {
+    console.error('Error deleting todo:', error.message);
+  }
+}
+
+async function editTodo(id) {
+  // Fetch the current todo by id
+  const response = await fetch(`http://localhost:3000/todos/${id}`);
+  const todo = await response.json();
+  
+
+  // Update the UI to show the editable input and Save button
+  const li = document.getElementById(id);
+  li.innerHTML = `
+    <input type="text" id="editInput_${id}" value="${todo.text}" />
+    <button onclick="saveEdit('${id}')">Tallenna</button>
+  `;
+
+  // Attach an event listener to the Save button
+  const saveButton = document.querySelector(`#editInput_${id} + button`);
+  saveButton.addEventListener('click', function () {
+    saveEdit(id);
+  });
+}
+
+
+async function saveEdit(id) {
+  // Get the updated text from the input field
+  const updatedText = document.getElementById(`editInput_${id}`).value;
+
+  // Update the todo in the database
+  const response = await fetch(`http://localhost:3000/todos/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text: updatedText }),
+  });
+
+  // Update the UI with the saved todo
+  const updatedTodo = await response.json();
+  const li = createTodoListItem(updatedTodo);
+  document.getElementById('todosList').appendChild(li);
+
+  // Reset the UI to the initial state
+  let infoText = document.getElementById('infoText');
+  infoText.innerHTML = '';
+}
+
+
+
+
+
+    </script>
+  </div>
+</body>
+</html>
